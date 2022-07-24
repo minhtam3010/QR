@@ -5,39 +5,39 @@ import (
 	"net/http"
 
 	"github.com/minhtam3010/qr/app/config"
-	"github.com/minhtam3010/qr/app/models"
+	// "github.com/minhtam3010/qr/app/models"
 )
 
-func GetGuardians(w http.ResponseWriter, r *http.Request) {
-	db := config.GetDB()
-	selfDB, err := db.Query("SELECT * FROM User ORDER BY id ASC")
-	if err != nil {
-		panic(err.Error())
-	}
-	guardian := models.Gurdian{}
-	res := []models.Gurdian{}
-    for selfDB.Next() {
-        var id int
-        var datecreated, dateupdated int64
-        var fullname, email, address, bod, phone, qualification, role string
-        err = selfDB.Scan(&id, &fullname, &email, &address, &bod, &phone, &qualification, &role, &datecreated, &dateupdated)
-        if err != nil {
-            panic(err.Error())
-        }
-        guardian.ID = id
-        guardian.Fullname = fullname
-        guardian.Email = email
-        guardian.Address = address
-        guardian.BOD = bod
-        guardian.Phone = phone
-        guardian.Qualification = qualification
-        guardian.Role = role
-        guardian.DateCreated = datecreated
-        guardian.DateUpdated = dateupdated
-        res = append(res, guardian)
-    }
-    defer db.Close()
-}
+// func GetGuardians(w http.ResponseWriter, r *http.Request) {
+// 	db := config.GetDB()
+// 	selfDB, err := db.Query("SELECT * FROM User ORDER BY id ASC")
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+// 	guardian := models.Guardian{}
+// 	res := []models.Guardian{}
+//     for selfDB.Next() {
+//         var id int
+//         var datecreated, dateupdated int64
+//         var fullname, email, address, bod, phone, qualification, role string
+//         err = selfDB.Scan(&id, &fullname, &email, &address, &bod, &phone, &qualification, &role, &datecreated, &dateupdated)
+//         if err != nil {
+//             panic(err.Error())
+//         }
+//         guardian.ID = id
+//         guardian.Fullname = fullname
+//         guardian.Email = email
+//         guardian.Address = address
+//         guardian.BOD = bod
+//         guardian.Phone = phone
+//         guardian.Qualification = qualification
+//         guardian.Role = role
+//         guardian.DateCreated = datecreated
+//         guardian.DateUpdated = dateupdated
+//         res = append(res, guardian)
+//     }
+//     defer db.Close()
+// }
 
 func CreateGuardian(w http.ResponseWriter, r *http.Request) {
 	db := config.GetDB()

@@ -8,6 +8,6 @@ import (
 var RegisterRoutes = func(routes *mux.Router) {
 	// routes.HandleFunc("/user/", controllers.GetUsers).Methods("GET")
 	routes.HandleFunc("/user/", controllers.CreateStudent).Methods("POST")
-	routes.HandleFunc("/guardian/", controllers.GetGuardians).Methods("GET")
+	// routes.HandleFunc("/guardian/", controllers.GetGuardians).Methods("GET")
 	routes.HandleFunc("/guardian/", controllers.CreateGuardian).Methods("POST")
 }

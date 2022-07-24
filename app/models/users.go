@@ -1,6 +1,7 @@
 package models
 
 import (
+	"log"
 	"time"
 
 	"github.com/minhtam3010/qr/app/config"
@@ -24,11 +25,17 @@ type User struct {
 	DateUpdated   int64  `json:"dateupdated"`
 }
 
+var (
+	id, entityID                                                                                 int
+	datecreated, dateupdated                                                                     time.Time
+	username, fullname, password, email, address, bod, phone, qualification, slogan, role, hobby string
+)
+
 func GetUsers() []User {
 	db := config.GetDB()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM User ORDER BY id ASC")
+	rows, err := db.Query("SELECT * FROM Users ORDER BY id ASC")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -36,7 +43,7 @@ func GetUsers() []User {
 	res := []User{}
 	for rows.Next() {
 		var id, entityID int
-		var datecreated, dateupdated int64
+		var datecreated, dateupdated time.Time
 		var username, fullname, password, email, address, bod, phone, qualification, slogan, role, hobby string
 		err = rows.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone, &qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
 		if err != nil {
@@ -55,8 +62,8 @@ func GetUsers() []User {
 		user.Slogan = slogan
 		user.Role = role
 		user.Hobby = hobby
-		user.DateCreated = datecreated
-		user.DateUpdated = dateupdated
+		user.DateCreated = datecreated.Unix()
+		user.DateUpdated = dateupdated.Unix()
 
 		res = append(res, user)
 	}
@@ -64,20 +71,26 @@ func GetUsers() []User {
 	return res
 }
 
-func GetUserById(id int, fullname string, username string) User {
+func GetUserById(id int, params ...string) User {
 	db := config.GetDB()
 	defer db.Close()
-	// nId := r.URL.Query().Get("id")
 
-	rows, err := db.Query("SELECT * FROM users WHERE id=?", id)
+	switch {
+	case len(params) == 1:
+		fullname = params[0]
+	case len(params) == 2:
+		fullname = params[0]
+		username = params[1]
+	case len(params) == 3:
+		log.Println("Error!!!")
+	}
+
+	rows, err := db.Query("SELECT * FROM users WHERE id=? OR fullname=? OR username=?", id, fullname, username)
 	if err != nil {
 		panic(err.Error())
 	}
 	user := User{}
 	for rows.Next() {
-		var id, entityID int
-		var datecreated, dateupdated time.Time
-		var username, fullname, password, email, address, bod, phone, qualification, slogan, role, hobby string
 		err = rows.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone, &qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
 		if err != nil {
 			panic(err.Error())
