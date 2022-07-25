@@ -9,7 +9,7 @@ import (
 
 type User struct {
 	ID            int    `json:"id"`
-	EntityCode    int    `json:"entityID"`
+	EntityCode    int    `json:"entityCode"`
 	Username      string `json:"username"`
 	Fullname      string `json:"fullname"`
 	Password      string `json:"password"`
@@ -31,7 +31,16 @@ var (
 	username, fullname, password, email, address, bod, phone, qualification, slogan, role, hobby string
 )
 
-func GetUsers() []User {
+func CheckTimeUpdateUser(u *User) {
+	switch {
+	case dateupdated.Unix() <= 0:
+		u.DateUpdated = 0
+	case dateupdated.Unix() > 0:
+		u.DateUpdated = dateupdated.Unix()
+	}
+}
+
+func GetUsers() ([]User, error) {
 	db := config.GetDB()
 	defer db.Close()
 
@@ -47,7 +56,7 @@ func GetUsers() []User {
 		var username, fullname, password, email, address, bod, phone, qualification, slogan, role, hobby string
 		err = rows.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone, &qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
 		if err != nil {
-			panic(err.Error())
+			CheckTimeUpdateUser(&user)
 		}
 		user.ID = id
 		user.EntityCode = entityID
@@ -68,24 +77,22 @@ func GetUsers() []User {
 		res = append(res, user)
 	}
 
-	return res
+	return res, nil
 }
 
-func GetUserById(id int, params ...string) User {
+func GetUserById(id int, params ...string) (User, error) {
 	db := config.GetDB()
 	defer db.Close()
 
 	switch {
-	case len(params) == 1:
-		fullname = params[0]
 	case len(params) == 2:
-		fullname = params[0]
-		username = params[1]
-	case len(params) == 3:
+		username = params[0]
+		fullname = params[1]
+	default:
 		log.Println("Error!!!")
 	}
 
-	rows, err := db.Query("SELECT * FROM users WHERE id=? OR fullname=? OR username=?", id, fullname, username)
+	rows, err := db.Query("SELECT * FROM users WHERE id=? AND username=? AND fullname=?", id, username, fullname)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -93,7 +100,7 @@ func GetUserById(id int, params ...string) User {
 	for rows.Next() {
 		err = rows.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone, &qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
 		if err != nil {
-			panic(err.Error())
+			CheckTimeUpdateUser(&user)
 		}
 		user.ID = id
 		user.EntityCode = entityID
@@ -112,5 +119,79 @@ func GetUserById(id int, params ...string) User {
 		user.DateUpdated = dateupdated.Unix()
 
 	}
-	return user
+	return user, nil
+}
+
+func (u *User) CreateUser() (User, error) {
+	db := config.GetDB()
+	defer db.Close()
+
+	// change unix to datetime
+	datecreated = time.Unix(u.DateCreated, 0)
+	dateupdated = time.Unix(u.DateUpdated, 0)
+
+	switch {
+	case dateupdated.Unix() <= 0:
+		create, err := db.Prepare("INSERT INTO Users(ID, EntityCode, Username, Fullname, Password, Email, Address, BOD, Phone, Qualification, Slogan, Role, Hobby, DateCreated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		create.Exec(u.ID, u.EntityCode, u.Username, u.Fullname, u.Password, u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan, u.Role, u.Hobby, datecreated)
+		log.Println("INSERT Successfully")
+	default:
+		create, err := db.Prepare("INSERT INTO Users(ID, EntityCode, Username, Fullname, Password, Email, Address, BOD, Phone, Qualification, Slogan, Role, Hobby, DateCreated, DateUpdated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		create.Exec(u.ID, u.EntityCode, u.Username, u.Fullname, u.Password, u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan, u.Role, u.Hobby, datecreated, dateupdated)
+		log.Println("INSERT Successfully")
+	}
+
+	return *u, nil
+}
+
+func (u *User) UpdateUser(id int, username string) (User, error) {
+	db := config.GetDB()
+	defer db.Close()
+
+	getUser, err := db.Query("SELECT * FROM users WHERE ID=? AND username=?", id, username)
+	if err != nil {
+		log.Printf("Not found the user %v\n", id)
+	}
+	for getUser.Next() {
+		err = getUser.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone, &qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
+		if err != nil {
+			CheckTimeUpdateUser(u)
+		}
+		u.ID = id
+		u.Username = username
+		u.DateCreated = datecreated.Unix()
+		u.DateUpdated = time.Now().Unix()
+	}
+	updateForm, err := db.Prepare("UPDATE users SET id=?, entitycode=?, username=?, fullname=?, password=?, email=?, address=?, bod=?, phone=?, qualification=?, slogan=?, role=?, hobby=?, datecreated=?, dateupdated=? WHERE id=? AND username=?")
+	if err != nil {
+		panic(err.Error())
+	}
+	updateForm.Exec(u.ID, u.EntityCode, u.Username, u.Fullname, u.Password, u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan, u.Role, u.Hobby, time.Unix(u.DateCreated, 0), time.Unix(u.DateUpdated, 0), u.ID, u.Username)
+	log.Println("UPDATED Successfully")
+	return *u, nil
+}
+
+func DeleteUser(id int, params ...string) error {
+	db := config.GetDB()
+	defer db.Close()
+	delForm, err := db.Prepare("DELETE FROM Users WHERE id= ? OR fullname=?")
+	if err != nil {
+		panic(err.Error())
+	}
+	if len(params) == 1 {
+		delForm.Exec(id, params[0])
+	} else {
+		delForm.Exec(id, "")
+	}
+
+	log.Println("DELETED SUCCESSFULLY")
+	return nil
 }

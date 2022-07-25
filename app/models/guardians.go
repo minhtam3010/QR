@@ -23,7 +23,7 @@ func GetGuardians() []Guardian {
 	db := config.GetDB()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM guardian ORDER BY id ASC")
+	rows, err := db.Query("SELECT * FROM guardians ORDER BY id ASC")
 	if err != nil {
 		panic(err.Error())
 	}

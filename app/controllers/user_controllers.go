@@ -1,79 +1,101 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
-	"github.com/minhtam3010/qr/app/config"
+	"github.com/gorilla/mux"
 	"github.com/minhtam3010/qr/app/models"
+	"github.com/minhtam3010/qr/app/utils"
 )
 
-func GetUsers(id int, fullname string, username string) []models.User {
-	db := config.GetDB()
-	defer db.Close()
+func WriteResponse(w http.ResponseWriter, res []byte) {
+	w.Header().Set("Content-Type", "pkglication/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+}
 
-	rows, err := db.Query("SELECT * FROM User ORDER BY id ASC")
+func GetUsers(w http.ResponseWriter, r *http.Request) {
+	users, _ := models.GetUsers()
+	if res, err := json.Marshal(users); err == nil {
+		WriteResponse(w, res)
+	} else {
+		panic(err)
+	}
+}
+
+func GetUserById(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userId := vars["id"]
+	username := vars["username"]
+	fullname := vars["fullname"]
+	fmt.Println(fullname)
+	ID, err := strconv.ParseInt(userId, 0, 0)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
-	user := models.User{}
-	res := []models.User{}
-	for rows.Next() {
-		var id, entityID int
-		var datecreated, dateupdated int64
-		var username, fullname, password, email, address, bod, phone, qualification, slogan, role, hobby string
-		err = rows.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone, &qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
-		if err != nil {
-			panic(err.Error())
-		}
-		user.ID = id
-		user.EntityCode = entityID
-		user.Username = username
-		user.Fullname = fullname
-		user.Password = password
-		user.Email = email
-		user.Address = address
-		user.BOD = bod
-		user.Phone = phone
-		user.Qualification = qualification
-		user.Slogan = slogan
-		user.Role = role
-		user.Hobby = hobby
-		user.DateCreated = datecreated
-		user.DateUpdated = dateupdated
-
-		res = append(res, user)
+	userDetails, err := models.GetUserById(int(ID), username, fullname)
+	if err != nil {
+		panic(err)
 	}
-
-	return res
+	if res, err := json.Marshal(userDetails); err == nil {
+		WriteResponse(w, res)
+	} else {
+		log.Printf("Error: %v\n", err)
+	}
 }
 
 func CreateStudent(w http.ResponseWriter, r *http.Request) {
-	db := config.GetDB()
-	if r.Method == "POST" {
-		ID := r.FormValue("id")
-		EntityCode := r.FormValue("entityID")
-		Username := r.FormValue("username")
-		Fullname := r.FormValue("fullname")
-		Password := r.FormValue("password")
-		Email := r.FormValue("email")
-		Address := r.FormValue("address")
-		BOD := r.FormValue("bod")
-		Phone := r.FormValue("phone")
-		Qualification := r.FormValue("qualification")
-		Slogan := r.FormValue("slogan")
-		Role := r.FormValue("role")
-		Hobby := r.FormValue("hobby")
-		DateCreated := r.FormValue("datecreated")
-		DateUpdated := r.FormValue("dateupdated")
-
-		create, err := db.Prepare("INSERT INTO User(ID, EntityCode, Username, Fullname, Password, Email, Address, BOD, Phone, Qualification, Slogan, Role, Hobby, DateCreated, DateUpdated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-		if err != nil {
-			panic(err.Error())
-		}
-		create.Exec(ID, EntityCode, Username, Fullname, Password, Email, Address, BOD, Phone, Qualification, Slogan, Role, Hobby, DateCreated, DateUpdated)
-		log.Println("INSERT Successfully")
+	createUser := &models.User{}
+	utils.ParseBody(r, createUser)
+	user, err := createUser.CreateUser()
+	if err != nil {
+		panic(err)
 	}
-	defer db.Close()
-	http.Redirect(w, r, "/", 301)
+	if res, err := json.Marshal(user); err == nil {
+		WriteResponse(w, res)
+	}else{
+		log.Println("Error :(((")
+	}
 }
+
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	updateUser := &models.User{}
+	utils.ParseBody(r, updateUser)
+	vars := mux.Vars(r)
+	userId := vars["id"]
+	username := vars["username"]
+	ID, err := strconv.ParseInt(userId, 0, 0)
+	if err != nil {
+		log.Println("Error while parsing")
+	}
+	userDetails, err := updateUser.UpdateUser(int(ID), username)
+	if err != nil{
+		panic(err)
+	}
+	if res, err := json.Marshal(userDetails); err == nil {
+		WriteResponse(w, res)
+	}else {
+		panic(err)
+	}
+
+}
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userId := vars["id"]
+	username := vars["username"]
+	ID, err := strconv.ParseInt(userId, 0, 0)
+
+	if err != nil {
+		panic(err)
+	}
+	if err := models.DeleteUser(int(ID), username); err != nil {
+		panic(err)
+	}
+	w.Write([]byte("DELETED Successfully"))
+}
+

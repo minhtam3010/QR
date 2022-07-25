@@ -1,12 +1,6 @@
 package controllers
 
-import (
-	"log"
-	"net/http"
-
-	"github.com/minhtam3010/qr/app/config"
-	// "github.com/minhtam3010/qr/app/models"
-)
+// "github.com/minhtam3010/qr/app/models"
 
 // func GetGuardians(w http.ResponseWriter, r *http.Request) {
 // 	db := config.GetDB()
@@ -39,27 +33,27 @@ import (
 //     defer db.Close()
 // }
 
-func CreateGuardian(w http.ResponseWriter, r *http.Request) {
-	db := config.GetDB()
-	if r.Method == "POST" {
-		ID := r.FormValue("id")
-		Fullname := r.FormValue("fullname")
-		Email := r.FormValue("email")
-		Address := r.FormValue("address")
-		BOD := r.FormValue("bod")
-		Phone := r.FormValue("phone")
-		Qualification := r.FormValue("qualification")
-		Role := r.FormValue("role")
-		DateCreated := r.FormValue("datecreated")
-		DateUpdated := r.FormValue("dateupdated")
+// func CreateGuardian(w http.ResponseWriter, r *http.Request) {
+// 	db := config.GetDB()
+// 	if r.Method == "POST" {
+// 		ID := r.FormValue("id")
+// 		Fullname := r.FormValue("fullname")
+// 		Email := r.FormValue("email")
+// 		Address := r.FormValue("address")
+// 		BOD := r.FormValue("bod")
+// 		Phone := r.FormValue("phone")
+// 		Qualification := r.FormValue("qualification")
+// 		Role := r.FormValue("role")
+// 		DateCreated := r.FormValue("datecreated")
+// 		DateUpdated := r.FormValue("dateupdated")
 
-		create, err := db.Prepare("INSERT INTO User(ID, Fullname, Email, Address, BOD, Phone, Qualification, Role, DateCreated, DateUpdated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-		if err != nil {
-			panic(err.Error())
-		}
-		create.Exec(ID, Fullname, Email, Address, BOD, Phone, Qualification, Role, DateCreated, DateUpdated)
-		log.Println("INSERT Successfully")
-	}
-	defer db.Close()
-	http.Redirect(w, r, "/", 301)
-}
+// 		create, err := db.Prepare("INSERT INTO User(ID, Fullname, Email, Address, BOD, Phone, Qualification, Role, DateCreated, DateUpdated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+// 		if err != nil {
+// 			panic(err.Error())
+// 		}
+// 		create.Exec(ID, Fullname, Email, Address, BOD, Phone, Qualification, Role, DateCreated, DateUpdated)
+// 		log.Println("INSERT Successfully")
+// 	}
+// 	defer db.Close()
+// 	http.Redirect(w, r, "/", 301)
+// }
