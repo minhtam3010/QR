@@ -1,7 +1,9 @@
 package models
 
 import (
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/minhtam3010/qr/app/config"
 )
@@ -19,7 +21,16 @@ type Guardian struct {
 	DateUpdated   int64  `json:"dateupdated"`
 }
 
-func GetGuardians() []Guardian {
+func CheckTimeUpdateGuardian(g *Guardian) {
+	switch {
+	case dateupdated.Unix() <= 0:
+		g.DateUpdated = 0
+	case dateupdated.Unix() > 0:
+		g.DateUpdated = dateupdated.Unix()
+	}
+}
+
+func GetGuardians() ([]Guardian, error) {
 	db := config.GetDB()
 	defer db.Close()
 
@@ -33,7 +44,7 @@ func GetGuardians() []Guardian {
 
 		err = rows.Scan(&id, &fullname, &email, &address, &bod, &phone, &qualification, &role, &datecreated, &dateupdated)
 		if err != nil {
-			panic(err.Error())
+			CheckTimeUpdateGuardian(&guardian)
 		}
 		guardian.ID = id
 		guardian.Fullname = fullname
@@ -48,24 +59,21 @@ func GetGuardians() []Guardian {
 
 		res = append(res, guardian)
 	}
-	return res
+	return res, nil
 }
 
-func GetGuardiansByID(id int, params ...string) Guardian {
+func GetGuardiansByID(id int, params ...string) (Guardian, error) {
 	db := config.GetDB()
 	defer db.Close()
 
 	switch {
 	case len(params) == 1:
 		fullname = params[0]
-	case len(params) == 2:
-		fullname = params[0]
-		email = params[1]
-	case len(params) == 3:
+	case len(params) > 1:
 		log.Println("Error!!!")
 	}
 
-	rows, err := db.Query("SELECT * FROM guardians WHERE id=? OR fullname=? OR email=?", id, fullname, email)
+	rows, err := db.Query("SELECT * FROM guardians WHERE id=? AND fullname=?", id, fullname)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -75,19 +83,7 @@ func GetGuardiansByID(id int, params ...string) Guardian {
 		err := rows.Scan(&id, &fullname, &email, &address, &bod, &phone, &qualification, &role, &datecreated, &dateupdated)
 
 		if err != nil {
-			switch {
-			case dateupdated.Unix() <= 0:
-				guardian.DateUpdated = 0
-			case dateupdated.Unix() > 0:
-				guardian.DateUpdated = dateupdated.Unix()
-			default:
-				panic(err.Error())
-			}
-			// if dateupdated.Unix() < 0{
-
-			// }else{
-			// 	panic(err.Error())
-			// }
+			CheckTimeUpdateGuardian(&guardian)
 		}
 		guardian.ID = id
 		guardian.Fullname = fullname
@@ -99,5 +95,74 @@ func GetGuardiansByID(id int, params ...string) Guardian {
 		guardian.Role = role
 		guardian.DateCreated = datecreated.Unix()
 	}
-	return guardian
+	return guardian, nil
+}
+
+func (g *Guardian) CreateGuardian() (Guardian, error) {
+	db := config.GetDB()
+	defer db.Close()
+
+	// change unix to datetime
+	datecreated = time.Unix(g.DateCreated, 0)
+	dateupdated = time.Unix(g.DateUpdated, 0)
+
+	switch {
+	case dateupdated.Unix() <= 0:
+		create, err := db.Prepare("INSERT INTO Guardians(ID, Fullname, Email, Address, BOD, Phone, Qualification, Role, DateCreated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		if err != nil {
+			panic(err.Error())
+		}
+		fmt.Println(g.ID)
+		create.Exec(g.ID, g.Fullname, g.Email, g.Address, g.BOD, g.Phone, g.Qualification, g.Role, datecreated)
+		log.Println("INSERT Guardian Successfully")
+	default:
+		create, err := db.Prepare("INSERT INTO Guardians(ID, Fullname, Email, Address, BOD, Phone, Qualification, Role, DateCreated, DateUpdated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		create.Exec(g.ID, g.Fullname, g.Email, g.Address, g.BOD, g.Phone, g.Qualification, g.Role, datecreated, dateupdated)
+		log.Println("INSERT Guardian Successfully")
+	}
+
+	return *g, nil
+}
+
+func (g *Guardian) UpdateGuardian(id int) (Guardian, error) {
+	db := config.GetDB()
+	defer db.Close()
+
+	getGuardian, err := db.Query("SELECT * FROM Guardians WHERE ID=?", id)
+	if err != nil {
+		log.Printf("Not found the Guardians %v\n", id)
+	}
+	for getGuardian.Next() {
+		err = getGuardian.Scan(&id, &fullname, &email, &address, &bod, &phone, &qualification, &role, &datecreated, &dateupdated)
+		if err != nil {
+			CheckTimeUpdateGuardian(g)
+		}
+		g.ID = id
+		g.DateCreated = datecreated.Unix()
+		g.DateUpdated = time.Now().Unix()
+	}
+	updateForm, err := db.Prepare("UPDATE guardians SET id=?, fullname=?, email=?, address=?, bod=?, phone=?, qualification=?, role=?, datecreated=?, dateupdated=? WHERE id=?")
+	if err != nil {
+		panic(err.Error())
+	}
+	updateForm.Exec(g.ID, g.Fullname, g.Email, g.Address, g.BOD, g.Phone, g.Qualification, g.Role, time.Unix(g.DateCreated, 0), time.Unix(g.DateUpdated, 0), g.ID)
+	log.Println("UPDATED Guardian Successfully")
+	return *g, nil
+}
+
+func DeleteGuardian(id int) error {
+	db := config.GetDB()
+	defer db.Close()
+	delForm, err := db.Prepare("DELETE FROM Guardians WHERE id= ?")
+	if err != nil {
+		panic(err.Error())
+	}
+	delForm.Exec(id)
+
+	log.Println("DELETED Guardian SUCCESSFULLY")
+	return nil
 }

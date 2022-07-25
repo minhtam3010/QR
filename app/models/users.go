@@ -76,7 +76,6 @@ func GetUsers() ([]User, error) {
 
 		res = append(res, user)
 	}
-
 	return res, nil
 }
 
@@ -136,7 +135,6 @@ func (u *User) CreateUser() (User, error) {
 		if err != nil {
 			panic(err.Error())
 		}
-
 		create.Exec(u.ID, u.EntityCode, u.Username, u.Fullname, u.Password, u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan, u.Role, u.Hobby, datecreated)
 		log.Println("INSERT Successfully")
 	default:
