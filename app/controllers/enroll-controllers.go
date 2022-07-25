@@ -26,8 +26,4 @@ func CreateEnroll(w http.ResponseWriter, r *http.Request) {
 	} else {
 		panic(err)
 	}
-	guardian_student := &models.Guardian_Student{}
-	guardian_student.StudentID = enroll.User.ID
-	guardian_student.GuardianID = enroll.Guardian.ID
-	guardian_student.CreateGS()
 }
