@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"errors"
 	"log"
 	"time"
 
@@ -21,6 +21,8 @@ type Guardian struct {
 	DateUpdated   int64  `json:"dateupdated"`
 }
 
+var GuardianID int
+
 func CheckTimeUpdateGuardian(g *Guardian) {
 	switch {
 	case dateupdated.Unix() <= 0:
@@ -32,7 +34,7 @@ func CheckTimeUpdateGuardian(g *Guardian) {
 
 func GetGuardians() ([]Guardian, error) {
 	db := config.GetDB()
-	defer db.Close()
+	// defer db.Close()
 
 	rows, err := db.Query("SELECT * FROM guardians ORDER BY id ASC")
 	if err != nil {
@@ -64,7 +66,7 @@ func GetGuardians() ([]Guardian, error) {
 
 func GetGuardiansByID(id int, params ...string) (Guardian, error) {
 	db := config.GetDB()
-	defer db.Close()
+	// defer db.Close()
 
 	switch {
 	case len(params) == 1:
@@ -99,38 +101,63 @@ func GetGuardiansByID(id int, params ...string) (Guardian, error) {
 }
 
 func (g *Guardian) CreateGuardian() (Guardian, error) {
+	// return Guardian{}, errors.New("fail at create guardian")
 	db := config.GetDB()
-	defer db.Close()
+	// defer DB.Close()
+	// TX, _ = DB.Begin()
+	// tx, err := DB.Begin()
 
 	// change unix to datetime
 	datecreated = time.Unix(g.DateCreated, 0)
 	dateupdated = time.Unix(g.DateUpdated, 0)
 
-	switch {
-	case dateupdated.Unix() <= 0:
-		create, err := db.Prepare("INSERT INTO Guardians(ID, Fullname, Email, Address, BOD, Phone, Qualification, Role, DateCreated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)")
-		if err != nil {
-			panic(err.Error())
-		}
-		fmt.Println(g.ID)
-		create.Exec(g.ID, g.Fullname, g.Email, g.Address, g.BOD, g.Phone, g.Qualification, g.Role, datecreated)
-		log.Println("INSERT Guardian Successfully")
-	default:
-		create, err := db.Prepare("INSERT INTO Guardians(ID, Fullname, Email, Address, BOD, Phone, Qualification, Role, DateCreated, DateUpdated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-		if err != nil {
-			panic(err.Error())
-		}
+	RowAllGuardian, errQ := db.Query("SELECT ID FROM guardians")
 
-		create.Exec(g.ID, g.Fullname, g.Email, g.Address, g.BOD, g.Phone, g.Qualification, g.Role, datecreated, dateupdated)
-		log.Println("INSERT Guardian Successfully")
+	if errQ != nil {
+		panic(errQ)
 	}
 
+	switch {
+	case dateupdated.Unix() <= 0:
+		_, err := TX.Exec(`INSERT INTO Guardians(ID, Fullname, Email, Address,
+			BOD, Phone, Qualification, Role, DateCreated)
+			VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			g.ID, g.Fullname, g.Email,
+			g.Address, g.BOD, g.Phone,
+			g.Qualification, g.Role, datecreated)
+
+		if err != nil {
+			panic(err.Error())
+		}
+	default:
+		_, err := TX.Exec(`INSERT INTO Guardians(ID, Fullname, Email, Address,
+				BOD, Phone, Qualification, Role, DateCreated, DateUpdated)
+				VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			g.ID, g.Fullname, g.Email,
+			g.Address, g.BOD, g.Phone,
+			g.Qualification, g.Role,
+			datecreated, dateupdated)
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+	for RowAllGuardian.Next() {
+		errInside1 := RowAllGuardian.Scan(&GuardianID)
+		if errInside1 != nil {
+			panic(errInside1)
+		} else {
+			if GuardianID == g.ID {
+				// _ = TX.Rollback()
+				return Guardian{}, errors.New("Error while creating Guardian")
+			}
+		}
+	}
 	return *g, nil
 }
 
 func (g *Guardian) UpdateGuardian(id int) (Guardian, error) {
 	db := config.GetDB()
-	defer db.Close()
+	// defer db.Close()
 
 	getGuardian, err := db.Query("SELECT * FROM Guardians WHERE ID=?", id)
 	if err != nil {
@@ -156,7 +183,7 @@ func (g *Guardian) UpdateGuardian(id int) (Guardian, error) {
 
 func DeleteGuardian(id int) error {
 	db := config.GetDB()
-	defer db.Close()
+	// defer db.Close()
 	delForm, err := db.Prepare("DELETE FROM Guardians WHERE id= ?")
 	if err != nil {
 		panic(err.Error())

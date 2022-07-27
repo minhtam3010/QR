@@ -27,27 +27,27 @@ func TestGuardian(t *testing.T) {
 	}
 }
 
-func TestCreateGuardian(t *testing.T) {
-	guardian := Guardian{
-		ID:            2,
-		Fullname:      "Le Minh Tam Parent",
-		Email:         "parentmt@gmail.com",
-		Address:       "None",
-		BOD:           "30/10/1984",
-		Phone:         "0000",
-		Qualification: "None",
-		Role:          "Mother",
-		DateCreated:   1658678118,
-		DateUpdated:   0,
-	}
+// func TestCreateGuardian(t *testing.T) {
+// 	guardian := Guardian{
+// 		ID:            2,
+// 		Fullname:      "Le Minh Tam Parent",
+// 		Email:         "parentmt@gmail.com",
+// 		Address:       "None",
+// 		BOD:           "30/10/1984",
+// 		Phone:         "0000",
+// 		Qualification: "None",
+// 		Role:          "Mother",
+// 		DateCreated:   1658678118,
+// 		DateUpdated:   0,
+// 	}
 
-	res, _ := guardian.CreateGuardian()
-	if res != guardian {
-		t.Error("Error :(((")
-	} else {
-		t.Log("PASSED")
-	}
-}
+// 	res, _ := guardian.CreateGuardian()
+// 	if res != guardian {
+// 		t.Error("Error :(((")
+// 	} else {
+// 		t.Log("PASSED")
+// 	}
+// }
 
 func TestUpdate(t *testing.T) {
 	guardian := Guardian{

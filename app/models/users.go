@@ -1,6 +1,8 @@
 package models
 
 import (
+	"database/sql"
+	"errors"
 	"log"
 	"time"
 
@@ -31,6 +33,12 @@ var (
 	username, fullname, password, email, address, bod, phone, qualification, slogan, role, hobby string
 )
 
+var (
+	userID    int
+	usernameT string
+	TX        *sql.Tx
+)
+
 func CheckTimeUpdateUser(u *User) {
 	switch {
 	case dateupdated.Unix() <= 0:
@@ -42,7 +50,7 @@ func CheckTimeUpdateUser(u *User) {
 
 func GetUsers() ([]User, error) {
 	db := config.GetDB()
-	defer db.Close()
+	// defer db.Close()
 
 	rows, err := db.Query("SELECT * FROM Users ORDER BY id ASC")
 	if err != nil {
@@ -81,7 +89,7 @@ func GetUsers() ([]User, error) {
 
 func GetUserById(id int, params ...string) (User, error) {
 	db := config.GetDB()
-	defer db.Close()
+	// defer db.Close()
 
 	switch {
 	case len(params) == 2:
@@ -122,37 +130,65 @@ func GetUserById(id int, params ...string) (User, error) {
 }
 
 func (u *User) CreateUser() (User, error) {
-	db := config.GetDB()
-	defer db.Close()
+	// return User{}, errors.New("err create user")
 
+	db := config.GetDB()
+	// defer DB.Close()
+	TX = config.GetTx()
 	// change unix to datetime
 	datecreated = time.Unix(u.DateCreated, 0)
 	dateupdated = time.Unix(u.DateUpdated, 0)
 
+	// tx, err := DB.Begin()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	rowsAllUser, errQ := db.Query("SELECT ID, Username FROM users")
+	if errQ != nil {
+		panic(errQ)
+	}
 	switch {
 	case dateupdated.Unix() <= 0:
-		create, err := db.Prepare("INSERT INTO Users(ID, EntityCode, Username, Fullname, Password, Email, Address, BOD, Phone, Qualification, Slogan, Role, Hobby, DateCreated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		_, err := TX.Exec(`INSERT INTO Users(ID, EntityCode, Username, Fullname, Password, Email,
+							Address, BOD, Phone, Qualification, Slogan, Role, Hobby, DateCreated)
+							VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			u.ID, u.EntityCode, u.Username, u.Fullname, u.Password,
+			u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan,
+			u.Role, u.Hobby, datecreated)
 		if err != nil {
 			panic(err.Error())
 		}
-		create.Exec(u.ID, u.EntityCode, u.Username, u.Fullname, u.Password, u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan, u.Role, u.Hobby, datecreated)
-		log.Println("INSERT Successfully")
 	default:
-		create, err := db.Prepare("INSERT INTO Users(ID, EntityCode, Username, Fullname, Password, Email, Address, BOD, Phone, Qualification, Slogan, Role, Hobby, DateCreated, DateUpdated) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		_, err := TX.Exec(`INSERT INTO Users(ID, EntityCode, Username, Fullname, Password, Email,
+						Address, BOD, Phone, Qualification, Slogan, Role, Hobby, DateCreated, DateUpdated)
+						VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			u.ID, u.EntityCode, u.Username, u.Fullname, u.Password,
+			u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan,
+			u.Role, u.Hobby, datecreated)
 		if err != nil {
 			panic(err.Error())
 		}
-
-		create.Exec(u.ID, u.EntityCode, u.Username, u.Fullname, u.Password, u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan, u.Role, u.Hobby, datecreated, dateupdated)
-		log.Println("INSERT Successfully")
 	}
+	for rowsAllUser.Next() {
+		errInside1 := rowsAllUser.Scan(&userID, &usernameT)
+		if errInside1 != nil {
+			panic(errInside1)
+		} else {
 
+			if userID == u.ID || u.EntityCode < 1 || u.EntityCode > 3 || usernameT == u.Username {
+				// _ = TX.Rollback()
+				return User{}, errors.New("Error while creating User")
+
+			}
+		}
+	}
 	return *u, nil
 }
 
 func (u *User) UpdateUser(id int, username string) (User, error) {
 	db := config.GetDB()
-	defer db.Close()
+	// defer db.Close()
 
 	getUser, err := db.Query("SELECT * FROM users WHERE ID=? AND username=?", id, username)
 	if err != nil {
@@ -179,7 +215,8 @@ func (u *User) UpdateUser(id int, username string) (User, error) {
 
 func DeleteUser(id int, params ...string) error {
 	db := config.GetDB()
-	defer db.Close()
+	// defer db.Close()
+
 	delForm, err := db.Prepare("DELETE FROM Users WHERE id= ? OR fullname=?")
 	if err != nil {
 		panic(err.Error())

@@ -11,14 +11,13 @@ type Guardian_Student struct {
 	StudentID  int `json:"studentID"`
 }
 
-func (gs *Guardian_Student) CreateGS() {
+func (gs *Guardian_Student) CreateGS(user User, guardian Guardian) {
 	db := config.GetDB()
-	defer db.Close()
 
 	create, err := db.Prepare("INSERT INTO guardian_student(GuardianID, StudentID) VALUES(?, ?)")
 	if err != nil {
 		panic(err)
 	}
-	create.Exec(gs.GuardianID, gs.StudentID)
+	create.Exec(user.ID, guardian.ID)
 	log.Println("INSERT Successfully")
 }

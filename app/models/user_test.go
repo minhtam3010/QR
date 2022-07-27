@@ -59,38 +59,38 @@ func TestUser(t *testing.T) {
 	}
 }
 
-func TestCreateUser(t *testing.T) {
-	user := User{
-		ID:            5,
-		EntityCode:    5,
-		Username:      "minhtam",
-		Fullname:      "Le Minh Tam3",
-		Password:      "999",
-		Email:         "tam@gmail.com",
-		Address:       "None",
-		BOD:           "30/10/2002",
-		Phone:         "9999",
-		Qualification: "None",
-		Slogan:        "None",
-		Role:          "Dev",
-		Hobby:         "None",
-		DateCreated:   1658665531,
-		DateUpdated:   0,
-	}
+// func TestCreateUser(t *testing.T) {
+// 	user := User{
+// 		ID:            5,
+// 		EntityCode:    5,
+// 		Username:      "minhtam",
+// 		Fullname:      "Le Minh Tam3",
+// 		Password:      "999",
+// 		Email:         "tam@gmail.com",
+// 		Address:       "None",
+// 		BOD:           "30/10/2002",
+// 		Phone:         "9999",
+// 		Qualification: "None",
+// 		Slogan:        "None",
+// 		Role:          "Dev",
+// 		Hobby:         "None",
+// 		DateCreated:   1658665531,
+// 		DateUpdated:   0,
+// 	}
 
-	u, err := user.CreateUser()
-	if err != nil {
-		panic(err)
-	}
+// 	u, err := user.CreateUser()
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	result, _ := GetUserById(5)
-	log.Println(u.ID, result.ID)
-	if result.ID != u.ID {
-		t.Error("Error :((((")
-	} else {
-		t.Log("PASSED")
-	}
-}
+// 	result, _ := GetUserById(5)
+// 	log.Println(u.ID, result.ID)
+// 	if result.ID != u.ID {
+// 		t.Error("Error :((((")
+// 	} else {
+// 		t.Log("PASSED")
+// 	}
+// }
 
 func TestDeleteUser(t *testing.T) {
 	user := User{

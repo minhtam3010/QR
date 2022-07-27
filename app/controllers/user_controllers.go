@@ -57,7 +57,7 @@ func CreateStudent(w http.ResponseWriter, r *http.Request) {
 	}
 	if res, err := json.Marshal(user); err == nil {
 		WriteResponse(w, res)
-	}else{
+	} else {
 		log.Println("Error :(((")
 	}
 }
@@ -73,12 +73,12 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error while parsing")
 	}
 	userDetails, err := updateUser.UpdateUser(int(ID), username)
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 	if res, err := json.Marshal(userDetails); err == nil {
 		WriteResponse(w, res)
-	}else {
+	} else {
 		panic(err)
 	}
 
@@ -98,4 +98,3 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte("DELETED Successfully"))
 }
-
