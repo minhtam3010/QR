@@ -178,7 +178,7 @@ func (u *User) CreateUser() (User, error) {
 
 			if userID == u.ID || u.EntityCode < 1 || u.EntityCode > 3 || usernameT == u.Username {
 				// _ = TX.Rollback()
-				return User{}, errors.New("Error while creating User")
+				return User{}, errors.New("error while creating User")
 
 			}
 		}

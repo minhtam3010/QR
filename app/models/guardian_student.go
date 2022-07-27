@@ -1,8 +1,6 @@
 package models
 
 import (
-	"log"
-
 	"github.com/minhtam3010/qr/app/config"
 )
 
@@ -11,13 +9,13 @@ type Guardian_Student struct {
 	StudentID  int `json:"studentID"`
 }
 
-func (gs *Guardian_Student) CreateGS(user User, guardian Guardian) {
-	db := config.GetDB()
+func (gs *Guardian_Student) CreateGS(user User, guardian Guardian) error {
+	TX := config.GetDB()
 
-	create, err := db.Prepare("INSERT INTO guardian_student(GuardianID, StudentID) VALUES(?, ?)")
+	_, err := TX.Exec("INSERT INTO guardian_student(GuardianID, StudentID) VALUES(?, ?)", user.ID, guardian.ID)
 	if err != nil {
 		panic(err)
 	}
-	create.Exec(user.ID, guardian.ID)
-	log.Println("INSERT Successfully")
+	// log.Println("INSERT Successfully")
+	return nil
 }

@@ -148,7 +148,7 @@ func (g *Guardian) CreateGuardian() (Guardian, error) {
 		} else {
 			if GuardianID == g.ID {
 				// _ = TX.Rollback()
-				return Guardian{}, errors.New("Error while creating Guardian")
+				return Guardian{}, errors.New("error while creating Guardian")
 			}
 		}
 	}
