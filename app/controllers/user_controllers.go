@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -32,7 +31,6 @@ func GetUserById(w http.ResponseWriter, r *http.Request) {
 	userId := vars["id"]
 	username := vars["username"]
 	fullname := vars["fullname"]
-	fmt.Println(fullname)
 	ID, err := strconv.ParseInt(userId, 0, 0)
 	if err != nil {
 		panic(err)

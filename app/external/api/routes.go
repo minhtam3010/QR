@@ -22,4 +22,11 @@ var RegisterRoutes = func(routes *mux.Router) {
 
 	// API for enroll
 	routes.HandleFunc("/enroll/", controllers.CreateEnroll).Methods("POST")
+
+	// API for caregiver
+	routes.HandleFunc("/caregiver/", controllers.GetCaregivers).Methods("GET")
+	routes.HandleFunc("/caregiver/{CaregiverID}/", controllers.GetCaregiverByID).Methods("GET")
+	routes.HandleFunc("/caregiver/", controllers.CreateCaregiver).Methods("POST")
+	routes.HandleFunc("/caregiver/{CaregiverID}/", controllers.UpdateCaregiver).Methods("PUT")
+	routes.HandleFunc("/caregiver/{CaregiverID}/", controllers.DeleteCaregiver).Methods("DELETE")
 }

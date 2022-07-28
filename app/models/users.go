@@ -59,9 +59,6 @@ func GetUsers() ([]User, error) {
 	user := User{}
 	res := []User{}
 	for rows.Next() {
-		var id, entityID int
-		var datecreated, dateupdated time.Time
-		var username, fullname, password, email, address, bod, phone, qualification, slogan, role, hobby string
 		err = rows.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone, &qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
 		if err != nil {
 			CheckTimeUpdateUser(&user)
@@ -133,16 +130,11 @@ func (u *User) CreateUser() (User, error) {
 	// return User{}, errors.New("err create user")
 
 	db := config.GetDB()
-	// defer DB.Close()
+
 	TX = config.GetTx()
 	// change unix to datetime
 	datecreated = time.Unix(u.DateCreated, 0)
 	dateupdated = time.Unix(u.DateUpdated, 0)
-
-	// tx, err := DB.Begin()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	rowsAllUser, errQ := db.Query("SELECT ID, Username FROM users")
 	if errQ != nil {
@@ -195,7 +187,8 @@ func (u *User) UpdateUser(id int, username string) (User, error) {
 		log.Printf("Not found the user %v\n", id)
 	}
 	for getUser.Next() {
-		err = getUser.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone, &qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
+		err = getUser.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone,
+			&qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
 		if err != nil {
 			CheckTimeUpdateUser(u)
 		}
@@ -204,7 +197,8 @@ func (u *User) UpdateUser(id int, username string) (User, error) {
 		u.DateCreated = datecreated.Unix()
 		u.DateUpdated = time.Now().Unix()
 	}
-	updateForm, err := db.Prepare("UPDATE users SET id=?, entitycode=?, username=?, fullname=?, password=?, email=?, address=?, bod=?, phone=?, qualification=?, slogan=?, role=?, hobby=?, datecreated=?, dateupdated=? WHERE id=? AND username=?")
+	updateForm, err := db.Prepare(`UPDATE users SET id=?, entitycode=?, username=?, fullname=?, password=?, email=?, address=?, bod=?, phone=?, qualification=?, 
+								slogan=?, role=?, hobby=?, datecreated=?, dateupdated=? WHERE id=? AND username=?`)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -217,14 +211,14 @@ func DeleteUser(id int, params ...string) error {
 	db := config.GetDB()
 	// defer db.Close()
 
-	delForm, err := db.Prepare("DELETE FROM Users WHERE id= ? OR fullname=?")
+	delUser, err := db.Prepare("DELETE FROM Users WHERE id= ? OR fullname=?")
 	if err != nil {
 		panic(err.Error())
 	}
 	if len(params) == 1 {
-		delForm.Exec(id, params[0])
+		delUser.Exec(id, params[0])
 	} else {
-		delForm.Exec(id, "")
+		delUser.Exec(id, "")
 	}
 
 	log.Println("DELETED SUCCESSFULLY")

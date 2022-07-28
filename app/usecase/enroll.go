@@ -25,7 +25,6 @@ func (e *Enroll) CreateEnroll() (Enroll, error) {
 	}
 
 	guardian, err := e.Guardian.CreateGuardian()
-	fmt.Println(err)
 	if err != nil {
 		// rollback
 		_ = tx.Rollback()
@@ -33,7 +32,7 @@ func (e *Enroll) CreateEnroll() (Enroll, error) {
 		return Enroll{}, err
 	}
 
-	if errComit := models.TX.Commit(); errComit != nil {
+	if errCommit := models.TX.Commit(); errCommit != nil {
 		fmt.Println("Error")
 	} else {
 		err = gs.CreateGS(user, guardian)
@@ -41,7 +40,8 @@ func (e *Enroll) CreateEnroll() (Enroll, error) {
 			_ = tx.Rollback()
 			log.Printf("Error1: %v", err)
 			return Enroll{}, err
-		}	}
+		}
+	}
 
 	return *e, nil
 }
