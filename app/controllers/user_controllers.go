@@ -47,16 +47,20 @@ func GetUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateStudent(w http.ResponseWriter, r *http.Request) {
+
 	createUser := &models.User{}
 	utils.ParseBody(r, createUser)
 	user, err := createUser.CreateUser()
 	if err != nil {
-		panic(err)
+		w.Write([]byte("Cannot duplicate ID or Username"))
+		return
 	}
+	if errCommit := models.TX.Commit(); err != nil {
+		panic(errCommit)
+	}
+
 	if res, err := json.Marshal(user); err == nil {
 		WriteResponse(w, res)
-	} else {
-		log.Println("Error :(((")
 	}
 }
 
@@ -90,9 +94,9 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		panic(err)
+	} else if err = models.DeleteUser(int(ID), username); err != nil {
+		w.Write([]byte("Not found ID in this table"))
+	} else {
+		w.Write([]byte("DELETED Successfully"))
 	}
-	if err := models.DeleteUser(int(ID), username); err != nil {
-		panic(err)
-	}
-	w.Write([]byte("DELETED Successfully"))
 }

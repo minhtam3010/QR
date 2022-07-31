@@ -130,8 +130,8 @@ func (u *User) CreateUser() (User, error) {
 	// return User{}, errors.New("err create user")
 
 	db := config.GetDB()
-
 	TX = config.GetTx()
+
 	// change unix to datetime
 	datecreated = time.Unix(u.DateCreated, 0)
 	dateupdated = time.Unix(u.DateUpdated, 0)
@@ -169,9 +169,7 @@ func (u *User) CreateUser() (User, error) {
 		} else {
 
 			if userID == u.ID || u.EntityCode < 1 || u.EntityCode > 3 || usernameT == u.Username {
-				// _ = TX.Rollback()
 				return User{}, errors.New("error while creating User")
-
 			}
 		}
 	}
@@ -180,15 +178,20 @@ func (u *User) CreateUser() (User, error) {
 
 func (u *User) UpdateUser(id int, username string) (User, error) {
 	db := config.GetDB()
-	// defer db.Close()
+	TX := config.GetTx()
 
-	getUser, err := db.Query("SELECT * FROM users WHERE ID=? AND username=?", id, username)
+	if err := Check(id, "Users"); err != nil {
+		return User{}, errors.New("error while updating user")
+	}
+
+	hold1, hold2 := u.ID, u.Username
+
+	getUser, err := db.Query("SELECT ID, Username, DateCreated, DateUpdated FROM users WHERE ID=? AND username=?", id, username)
 	if err != nil {
 		log.Printf("Not found the user %v\n", id)
 	}
 	for getUser.Next() {
-		err = getUser.Scan(&id, &entityID, &username, &fullname, &password, &email, &address, &bod, &phone,
-			&qualification, &slogan, &role, &hobby, &datecreated, &dateupdated)
+		err = getUser.Scan(&id, &username, &datecreated, &dateupdated)
 		if err != nil {
 			CheckTimeUpdateUser(u)
 		}
@@ -197,30 +200,39 @@ func (u *User) UpdateUser(id int, username string) (User, error) {
 		u.DateCreated = datecreated.Unix()
 		u.DateUpdated = time.Now().Unix()
 	}
-	updateForm, err := db.Prepare(`UPDATE users SET id=?, entitycode=?, username=?, fullname=?, password=?, email=?, address=?, bod=?, phone=?, qualification=?, 
-								slogan=?, role=?, hobby=?, datecreated=?, dateupdated=? WHERE id=? AND username=?`)
+	if hold1 != id && hold2 != username {
+		return User{}, errors.New("cannot change ID and Username")
+	}
+
+	_, err = TX.Exec(`UPDATE users SET id=?, entitycode=?, username=?, fullname=?, password=?, email=?, address=?, bod=?, phone=?, qualification=?, 
+								slogan=?, role=?, hobby=?, datecreated=?, dateupdated=? WHERE id=? AND username=?`,
+		u.ID, u.EntityCode, u.Username, u.Fullname, u.Password, u.Email, u.Address, u.BOD, u.Phone, u.Qualification,
+		u.Slogan, u.Role, u.Hobby, time.Unix(u.DateCreated, 0), time.Unix(u.DateUpdated, 0), u.ID, u.Username)
+
 	if err != nil {
 		panic(err.Error())
+	}else if errCommit := TX.Commit(); errCommit != nil {
+		log.Println("Error :(((")
+	} else {
+		log.Println("UPDATED User SUCCESSFULLY")
 	}
-	updateForm.Exec(u.ID, u.EntityCode, u.Username, u.Fullname, u.Password, u.Email, u.Address, u.BOD, u.Phone, u.Qualification, u.Slogan, u.Role, u.Hobby, time.Unix(u.DateCreated, 0), time.Unix(u.DateUpdated, 0), u.ID, u.Username)
-	log.Println("UPDATED Successfully")
 	return *u, nil
 }
 
 func DeleteUser(id int, params ...string) error {
-	db := config.GetDB()
-	// defer db.Close()
+	TX = config.GetTx()
 
-	delUser, err := db.Prepare("DELETE FROM Users WHERE id= ? OR fullname=?")
+	err := Check(id, "Users")
+	if err != nil {
+		return errors.New("not found ID")
+	}
+	_, err = TX.Exec("DELETE FROM Users WHERE id= ?", id)
 	if err != nil {
 		panic(err.Error())
-	}
-	if len(params) == 1 {
-		delUser.Exec(id, params[0])
+	} else if errCommit := TX.Commit(); errCommit != nil {
+		return errors.New("error while commiting transaction")
 	} else {
-		delUser.Exec(id, "")
+		log.Println("DELETED User SUCCESSFULLY")
 	}
-
-	log.Println("DELETED SUCCESSFULLY")
 	return nil
 }

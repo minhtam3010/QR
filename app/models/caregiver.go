@@ -31,10 +31,10 @@ func CheckTimeUpdateCaregiver(c *Caregiver) {
 	}
 }
 
-func Check(ID int) error {
+func Check(ID int, table string) error {
 	db := config.GetDB()
 
-	rows, err := db.Query("SELECT id FROM caregivers ORDER BY id ASC")
+	rows, err := db.Query("SELECT id FROM " + table + " ORDER BY id ASC")
 	if err != nil {
 		panic(err)
 	}
@@ -186,8 +186,8 @@ func (cg *Caregiver) UpdateCaregiver(id int) (Caregiver, error){
 }
 
 func DeleteCaregiver(id int) error {
-	TX := config.GetTx()
-	err := Check(id)
+	TX = config.GetTx()
+	err := Check(id, "caregivers")
 	if err != nil {
 		return errors.New("not found id in that table")
 	}
@@ -196,6 +196,8 @@ func DeleteCaregiver(id int) error {
 		return errors.New("error while deleting caregiver")
 	} else if errCommit := TX.Commit(); errCommit != nil {
 		log.Println("Error")
+	}else{
+		log.Println("DELETED Caregiver SUCCESSFULLY")
 	}
 	return nil
 }

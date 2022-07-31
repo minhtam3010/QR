@@ -80,13 +80,13 @@ func DeleteGuardian(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	guardianID := vars["id"]
 	ID, err := strconv.ParseInt(guardianID, 0, 0)
-
+	
 	if err != nil {
 		panic(err)
+	}else if err = models.DeleteGuardian(int(ID)); err != nil {
+		w.Write([]byte("Not Found ID"))
+	}else{
+		w.Write([]byte("DELETED guarian Successfully"))
 	}
-	if err := models.DeleteGuardian(int(ID)); err != nil {
-		panic(err)
-	}
-	w.Write([]byte("DELETED guarian Successfully"))
 }
 
