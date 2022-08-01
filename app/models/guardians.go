@@ -103,6 +103,7 @@ func (g *Guardian) CreateGuardian() (Guardian, error) {
 	// return Guardian{}, errors.New("fail at create guardian")
 
 	db := config.GetDB()
+	TX = config.GetTx()
 
 	// change unix to datetime
 	datecreated = time.Unix(g.DateCreated, 0)
@@ -154,7 +155,7 @@ func (g *Guardian) CreateGuardian() (Guardian, error) {
 func (g *Guardian) UpdateGuardian(id int) (Guardian, error) {
 	db := config.GetDB()
 
-	TX := config.GetTx()
+	TX = config.GetTx()
 	hold := g.ID
 
 	err := Check(id, "Guardians")

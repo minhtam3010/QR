@@ -86,7 +86,6 @@ func GetUsers() ([]User, error) {
 
 func GetUserById(id int, params ...string) (User, error) {
 	db := config.GetDB()
-	// defer db.Close()
 
 	switch {
 	case len(params) == 2:
@@ -178,13 +177,14 @@ func (u *User) CreateUser() (User, error) {
 
 func (u *User) UpdateUser(id int, username string) (User, error) {
 	db := config.GetDB()
-	TX := config.GetTx()
-
+	TX = config.GetTx()
+	
+	hold1, hold2 := u.ID, u.Username
+	
 	if err := Check(id, "Users"); err != nil {
 		return User{}, errors.New("error while updating user")
 	}
 
-	hold1, hold2 := u.ID, u.Username
 
 	getUser, err := db.Query("SELECT ID, Username, DateCreated, DateUpdated FROM users WHERE ID=? AND username=?", id, username)
 	if err != nil {
