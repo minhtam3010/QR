@@ -38,11 +38,11 @@ func Check(ID int, table string) error {
 	if err != nil {
 		panic(err)
 	}
-	for rows.Next(){
+	for rows.Next() {
 		err = rows.Scan(&id)
 		if err != nil {
 			panic(err)
-		}else if (id == ID) {
+		} else if id == ID {
 			return nil
 		}
 	}
@@ -136,7 +136,7 @@ func (cg *Caregiver) CreateCaregiver() (Caregiver, error) {
 		}
 	}
 	if loop {
-		for rowsAllCaregiver.Next(){
+		for rowsAllCaregiver.Next() {
 			err = rowsAllCaregiver.Scan(&id)
 			if err != nil {
 				panic(err)
@@ -154,7 +154,7 @@ func (cg *Caregiver) CreateCaregiver() (Caregiver, error) {
 	return *cg, nil
 }
 
-func (cg *Caregiver) UpdateCaregiver(id int) (Caregiver, error){
+func (cg *Caregiver) UpdateCaregiver(id int) (Caregiver, error) {
 	db := config.GetDB()
 
 	TX = config.GetTx()
@@ -179,7 +179,7 @@ func (cg *Caregiver) UpdateCaregiver(id int) (Caregiver, error){
 	_, err = TX.Exec(`UPDATE caregivers SET ID=?, Name=?, BOD=?, Address=?, Phone=?, DateCreated=?, DateUpdated=? WHERE ID=?`, id, cg.Name, cg.BOD, cg.Address, cg.Phone, time.Unix(cg.DateCreated, 0), time.Unix(cg.DateUpdated, 0), id)
 	if err != nil {
 		panic(err)
-	}else if errCommit := TX.Commit(); errCommit != nil {
+	} else if errCommit := TX.Commit(); errCommit != nil {
 		log.Println("Error")
 	}
 	return *cg, nil
@@ -196,7 +196,7 @@ func DeleteCaregiver(id int) error {
 		return errors.New("error while deleting caregiver")
 	} else if errCommit := TX.Commit(); errCommit != nil {
 		log.Println("Error")
-	}else{
+	} else {
 		log.Println("DELETED Caregiver SUCCESSFULLY")
 	}
 	return nil

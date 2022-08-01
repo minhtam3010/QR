@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -25,7 +24,6 @@ func GetGuardianById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	guardianID := vars["id"]
 	fullname := vars["fullname"]
-	fmt.Println(fullname)
 	ID, err := strconv.ParseInt(guardianID, 0, 0)
 	if err != nil {
 		panic(err)
@@ -50,7 +48,7 @@ func CreateGuardian(w http.ResponseWriter, r *http.Request) {
 	}
 	if res, err := json.Marshal(guardian); err == nil {
 		WriteResponse(w, res)
-	}else{
+	} else {
 		log.Println("Error :(((")
 	}
 }
@@ -65,12 +63,13 @@ func UpdateGuardian(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error while parsing")
 	}
 	guardianDetails, err := updateGuardian.UpdateGuardian(int(ID))
-	if err != nil{
-		panic(err)
+	if err != nil {
+		w.Write([]byte("U can not change ID"))
+		return
 	}
 	if res, err := json.Marshal(guardianDetails); err == nil {
 		WriteResponse(w, res)
-	}else {
+	} else {
 		panic(err)
 	}
 
@@ -80,13 +79,12 @@ func DeleteGuardian(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	guardianID := vars["id"]
 	ID, err := strconv.ParseInt(guardianID, 0, 0)
-	
+
 	if err != nil {
 		panic(err)
-	}else if err = models.DeleteGuardian(int(ID)); err != nil {
+	} else if err = models.DeleteGuardian(int(ID)); err != nil {
 		w.Write([]byte("Not Found ID"))
-	}else{
-		w.Write([]byte("DELETED guarian Successfully"))
+	} else {
+		w.Write([]byte("DELETED Guardian Successfully"))
 	}
 }
-

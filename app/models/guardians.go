@@ -154,8 +154,8 @@ func (g *Guardian) CreateGuardian() (Guardian, error) {
 
 func (g *Guardian) UpdateGuardian(id int) (Guardian, error) {
 	db := config.GetDB()
-
 	TX = config.GetTx()
+
 	hold := g.ID
 
 	err := Check(id, "Guardians")
@@ -163,9 +163,9 @@ func (g *Guardian) UpdateGuardian(id int) (Guardian, error) {
 		return Guardian{}, errors.New("not found ID to update")
 	}
 
-	getGuardian, err := db.Query("SELECT id, DateCreated, DateUpdated FROM Guardians WHERE ID=?", id)
+	getGuardian, err := db.Query("SELECT id, DateCreated, DateUpdate FROM Guardians WHERE ID=?", id)
 	if err != nil {
-		panic(err)
+		log.Printf("Not found the guardian %v\n", id)
 	}
 	for getGuardian.Next() {
 		err = getGuardian.Scan(&id, &datecreated, &dateupdated)
@@ -178,17 +178,20 @@ func (g *Guardian) UpdateGuardian(id int) (Guardian, error) {
 	}
 	if hold != id {
 		_ = TX.Rollback()
+		if errCommit := TX.Commit(); errCommit != nil {
+			log.Println("Error")
+		}
 		return Guardian{}, errors.New("cannot update the ID")
 	}
 	_, err = TX.Exec(`UPDATE guardians SET id=?, fullname=?, email=?, address=?, bod=?, phone=?, 
-								qualification=?, role=?, datecreated=?, dateupdated=? WHERE id=?`,
+								qualification=?, role=?, datecreated=?, dateupdate=? WHERE id=?`,
 		g.ID, g.Fullname, g.Email, g.Address, g.BOD, g.Phone, g.Qualification,
 		g.Role, time.Unix(g.DateCreated, 0), time.Unix(g.DateUpdated, 0), g.ID)
 	if err != nil {
 		return Guardian{}, errors.New("error while updating guardian")
-	}else if errCommit := TX.Commit(); errCommit != nil {
+	} else if errCommit := TX.Commit(); errCommit != nil {
 		log.Println("Error")
-	}else{
+	} else {
 		log.Println("UPDATED Guardian SUCCESSFULLY")
 	}
 	return *g, nil
@@ -196,7 +199,7 @@ func (g *Guardian) UpdateGuardian(id int) (Guardian, error) {
 
 func DeleteGuardian(id int) error {
 	TX := config.GetTx()
-	
+
 	err := Check(id, "guardians")
 	if err != nil {
 		return errors.New("not found ID")
@@ -205,9 +208,9 @@ func DeleteGuardian(id int) error {
 	_, err = TX.Exec("DELETE FROM Guardians WHERE id= ?", id)
 	if err != nil {
 		return errors.New("error while deleting guardian")
-	}else if errCommit := TX.Commit(); errCommit != nil {
+	} else if errCommit := TX.Commit(); errCommit != nil {
 		log.Println("Error")
-	}else{
+	} else {
 		log.Println("DELETED Guardian SUCCESSFULLY")
 	}
 	return nil

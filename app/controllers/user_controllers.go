@@ -76,9 +76,9 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	userDetails, err := updateUser.UpdateUser(int(ID), username)
 	if err != nil {
-		panic(err)
-	}
-	if res, err := json.Marshal(userDetails); err == nil {
+		w.Write([]byte("U cannot change ID or username"))
+		return
+	} else if res, err := json.Marshal(userDetails); err == nil {
 		WriteResponse(w, res)
 	} else {
 		panic(err)
@@ -89,12 +89,11 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userId := vars["id"]
-	username := vars["username"]
 	ID, err := strconv.ParseInt(userId, 0, 0)
 
 	if err != nil {
 		panic(err)
-	} else if err = models.DeleteUser(int(ID), username); err != nil {
+	} else if err = models.DeleteUser(int(ID)); err != nil {
 		w.Write([]byte("Not found ID in this table"))
 	} else {
 		w.Write([]byte("DELETED Successfully"))
